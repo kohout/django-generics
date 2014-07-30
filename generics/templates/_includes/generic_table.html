@@ -1,0 +1,15 @@
+{% load render_table from django_tables2 %}
+{% if table %}
+  {% if filter_buttons %}
+      <div class="btn-group">
+        {% for fb in filter_buttons %}
+            <a href="{{ fb.url }}" class="btn btn-info{% if fb.active %} active{% endif %}" >{{ fb.label }}</a>
+        {% endfor %}
+      </div>
+  {% endif %}
+  {% if object_list %}
+    {% render_table table %}
+  {% else %}
+    <p>There are no records available.</p>
+  {% endif %}
+{% endif %}

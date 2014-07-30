@@ -1,0 +1,22 @@
+{% load bootstrap3 i18n %}
+{% if form %}
+  {{ form.media }}
+  <form method="post" action="." enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if form_template %}
+      {% include form_template %}
+    {% else %}
+      {% bootstrap_form form %}
+    {% endif %}
+    {% buttons %}
+      <button type="submit"
+              class="btn btn-primary pull-right btn-lg">
+        {% if submit_button_text %}
+          {{ submit_button_text }}
+        {% else %}
+          {% trans "Save" %}
+        {% endif %}
+      </button>
+    {% endbuttons %}
+  </form>
+{% endif %}

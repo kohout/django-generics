@@ -144,7 +144,7 @@ class GenericTableMixin(GenericModelMixin):
             'label': 'Add', }]
 
     def get_title(self):
-        return u'List of %s' % self.get_verbose_name_plural()
+        return _(u'List of %s') % self.get_verbose_name_plural()
 
 
 class RelatedMixin(GenericModelMixin):

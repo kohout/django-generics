@@ -3,6 +3,7 @@ from django.conf.urls import patterns, url
 
 """ Generic stuff for url patterns """
 
+
 def crud_urls(namespace,
               class_prefix,
               module,
@@ -29,25 +30,27 @@ def crud_urls(namespace,
 
     return _patterns
 
+
 def append_1n_urls(class_name,
+                   view_name_prefix,
                    available_views=['list', 'update', 'create', 'delete']):
     l = class_name.lower()
     prefix = r'^/%s/'
     pattern_list = []
     if 'list' in available_views:
-        pattern_list.append(['%sListView' % class_name,
+        pattern_list.append(['%sListView' % view_name_prefix,
             prefix + r'(?P<parent_pk>[\w-]+)/%s/$' % l,
             '%s-list' % l])
     if 'update' in available_views:
-        pattern_list.append(['%sUpdateView' % class_name,
+        pattern_list.append(['%sUpdateView' % view_name_prefix,
             prefix + r'(?P<parent_pk>[\w-]+)/%s/(?P<pk>[\w-]+)/update/$' % l,
             '%s-update' % l])
     if 'create' in available_views:
-        pattern_list.append(['%sCreateView' % class_name,
+        pattern_list.append(['%sCreateView' % view_name_prefix,
             prefix + r'(?P<parent_pk>[\w-]+)/%s/create/$' % l,
             '%s-create' % l])
     if 'delete' in available_views:
-        pattern_list.append(['%sDeleteView' % class_name,
+        pattern_list.append(['%sDeleteView' % view_name_prefix,
             prefix + r'(?P<parent_pk>[\w-]+)/%s/(?P<pk>[\w-]+)/delete/$' % l,
             '%s-delete' % l])
     return pattern_list

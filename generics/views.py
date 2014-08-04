@@ -45,6 +45,7 @@ class GenericModelMixin(object):
     template_name = 'administration/base.html'
     selected = None
     filter_form = None
+    success_view_name = None
 
     def get_breadcrumbs(self):
         list_view = 'admin-%s-list' % self.get_model_name().lower()
@@ -93,6 +94,11 @@ class GenericModelMixin(object):
             'model': self.get_model_name(),
             'filename': filename
         }]
+
+    def get_success_url(self):
+        if self.success_view_name:
+            return reverse_lazy(self.success_view_name, kwargs={'pk': self.object.pk})
+        return reverse_lazy('admin-%s-list' % self.get_model_name())
 
 
 class GenericTableMixin(GenericModelMixin):
@@ -265,9 +271,6 @@ class GenericCrudMixin(GenericModelMixin):
     def get_model(self):
         return self.model
 
-    def get_success_url(self):
-        return reverse_lazy('admin-%s-list' % self.get_model_name())
-
     def get(self, request, *args, **kwargs):
         if self.template_name_suffix == '_confirm_delete':
             return self.post(request, *args, **kwargs)
@@ -285,7 +288,6 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
       * pk -> PK of the current instance
       * parent_pk -> PK of the parent instance
     """
-    success_view_name = None
     form_template = None
 
     def get_context_data(self, *args, **kwargs):

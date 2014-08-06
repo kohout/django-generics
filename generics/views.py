@@ -75,7 +75,7 @@ class GenericModelMixin(object):
         return self.get_model()._meta.verbose_name_plural
 
     def get_title(self):
-        return u'(unknown)'
+        return _(u'(unknown)')
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericModelMixin, self).get_context_data(
@@ -256,11 +256,11 @@ class GenericCrudMixin(GenericModelMixin):
 
     def get_title(self):
         if self.template_name_suffix == '_detail':
-            return u'Details of %s' % self.object
+            return _(u'Details of %s') % self.object
         if self.object is None:
-            return u'New %s' % self.get_verbose_name()
+            return _(u'New %s') % self.get_verbose_name()
 
-        return u'Update %s' % self.get_verbose_name()
+        return _(u'Update %s') % self.get_verbose_name()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)

@@ -4,6 +4,9 @@
   <form method="post" action="." enctype="multipart/form-data">
     {% csrf_token %}
     {% if form_template %}
+      {% for field in form.hidden_fields %}
+        {{ field }}
+      {% endfor %}
       {% include form_template %}
     {% else %}
       {% bootstrap_form form %}

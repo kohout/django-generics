@@ -46,6 +46,7 @@ class GenericModelMixin(object):
     selected = None
     filter_form = None
     success_view_name = None
+    session_key = None
 
     def get_breadcrumbs(self):
         list_view = 'admin-%s-list' % self.get_model_name().lower()
@@ -96,8 +97,13 @@ class GenericModelMixin(object):
         }]
 
     def get_success_url(self):
+        if self.session_key:
+            last_url = self.request.session.get(self.session_key, None)
+            if last_url:
+                return last_url
         if self.success_view_name:
-            return reverse_lazy(self.success_view_name, kwargs={'pk': self.object.pk})
+            return reverse_lazy(self.success_view_name, kwargs={
+                'pk': self.object.pk})
         return reverse_lazy('admin-%s-list' % self.get_model_name())
 
 
@@ -147,10 +153,18 @@ class GenericTableMixin(GenericModelMixin):
         return [{
             'css': 'btn-success',
             'href': reverse_lazy('admin-%s-create' % self.get_model_name()),
-            'label': 'Add', }]
+            'label': _('Add'), }]
 
     def get_title(self):
         return _(u'List of %s') % self.get_verbose_name_plural()
+
+    def update_last_session(self, request):
+        if self.session_key:
+            request.session[self.session_key] = self.request.get_full_path()
+
+    def get(self, request, *args, **kwargs):
+        self.update_last_session(request)
+        return super(GenericTableMixin, self).get(request, *args, **kwargs)
 
 
 class RelatedMixin(GenericModelMixin):
@@ -219,7 +233,7 @@ class RelatedTableMixin(RelatedMixin, GenericTableMixin):
                 'parent': self.parent._meta.model_name.lower(),
                 'model': self.get_model_name()
             }, kwargs={'parent_pk': self.parent.pk }),
-            'label': 'Add', }]
+            'label': _('Add'), }]
 
 
 #class RelatedLogMixin(RelatedMixin, GenericTableMixin):
@@ -296,6 +310,10 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         return ctx
 
     def get_success_url(self):
+        if self.session_key:
+            last_url = self.request.session.get(self.session_key, None)
+            if last_url:
+                return last_url
         if self.template_name_suffix == '_confirm_delete':
             return reverse_lazy(self.success_view_name,
                 kwargs={'parent_pk': self.parent.pk})

@@ -8,7 +8,7 @@
       </div>
   {% endif %}
   {% if object_list %}
-    {% render_table table %}
+    {% render_table table "django_tables2/table.html" %}
   {% else %}
     <p>There are no records available.</p>
   {% endif %}

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.core.exceptions import ImproperlyConfigured
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
 from django.http import HttpResponse
 from django.views.generic import View
@@ -117,6 +118,7 @@ class GenericTableMixin(GenericModelMixin):
     table_class = False
     """
     filter_conf = None
+    table_data = None
 
     def get_queryset(self):
         qs = super(GenericTableMixin, self).get_queryset()
@@ -134,13 +136,22 @@ class GenericTableMixin(GenericModelMixin):
         module = importlib.import_module(module_name)
         return getattr(module, '%sTable' % self.get_class_name())
 
-    def get_table(self):
+    def get_table(self, **kwargs):
         table_class = self.get_table_class()
         if table_class:
-            table = table_class(self.get_queryset())
+            table = table_class(self.get_table_data(), **kwargs)
             RequestConfig(self.request).configure(table)
             return table
         return None
+
+    def get_table_data(self):
+        if self.table_data:
+            return self.table_data
+        elif hasattr(self, "get_queryset"):
+            return self.get_queryset()
+        raise ImproperlyConfigured("Table data was not specified. Define "
+                                   "%(cls)s.table_data"
+                                   % {"cls": type(self).__name__})
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericTableMixin, self).get_context_data(*args, **kwargs)

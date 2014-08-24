@@ -1,5 +1,6 @@
 {% load bootstrap3 generics %}
-<div class="pull-right" style="min-width: 60px;">
+<div class="pull-right"
+     style="min-width: {{ record.row_buttons|row_button_width }}px;">
 {% for item in record.row_buttons %}
   <a href="{{ item.url }}"
      class="btn btn-xs {{ item.css }}"

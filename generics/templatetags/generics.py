@@ -17,3 +17,13 @@ def percentage(value):
     returns a percentage value (between 0 and 100)
     """
     return value * 100.0
+
+@register.filter
+def row_button_width(row_buttons):
+    """
+    returns the width of the row buttons
+    """
+    if not row_buttons:
+        return 0
+    n = len(row_buttons)
+    return n * 25 + (n - 1) * 5

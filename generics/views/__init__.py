@@ -103,8 +103,12 @@ class GenericModelMixin(object):
             if last_url:
                 return last_url
         if self.success_view_name:
-            return reverse_lazy(self.success_view_name, kwargs={
-                'pk': self.object.pk})
+            if self.success_view_name.endswith('-list'):
+                # redirect to list view (without param)
+                return reverse_lazy(self.success_view_name)
+            else:
+                return reverse_lazy(self.success_view_name, kwargs={
+                    'pk': self.object.pk})
         return reverse_lazy('admin-%s-list' % self.get_model_name())
 
 
@@ -167,7 +171,7 @@ class GenericTableMixin(GenericModelMixin):
             'label': _('Add'), }]
 
     def get_title(self):
-        return _(u'List of %s') % self.get_verbose_name_plural()
+        return self.get_verbose_name_plural()
 
     def update_last_session(self, request):
         if self.session_key:
@@ -283,9 +287,9 @@ class GenericCrudMixin(GenericModelMixin):
         if self.template_name_suffix == '_detail':
             return _(u'Details of %s') % self.object
         if self.object is None:
-            return _(u'New %s') % self.get_verbose_name()
+            return _(u'%s erstellen') % self.get_verbose_name()
 
-        return _(u'Update %s') % self.get_verbose_name()
+        return _(u'%s bearbeiten') % self.get_verbose_name()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)

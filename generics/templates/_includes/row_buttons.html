@@ -1,10 +1,19 @@
 {% load bootstrap3 generics %}
 <div class="pull-right"
      style="white-space: nowrap; min-width: {{ record.row_buttons|row_button_width }}px;">
-{% for item in record.row_buttons|pass_param:request %}
-  <a href="{{ item.url }}"
-     class="btn btn-xs {{ item.css }}"
-     {% if item.target %}target="{{ item.target }}"{% endif %}
-     title="{{ item.label }}">{% icon item.icon %}</a>
-{% endfor %}
+{% if record.get_row_buttons %}
+    {% for item in record.get_row_buttons|pass_param:request %}
+      <a href="{{ item.url }}"
+         class="btn btn-xs {{ item.css }}"
+         {% if item.target %}target="{{ item.target }}"{% endif %}
+         title="{{ item.label }}">{% icon item.icon %}</a>
+    {% endfor %}
+{% else %}
+    {% for item in record.row_buttons %}
+      <a href="{{ item.url }}"
+         class="btn btn-xs {{ item.css }}"
+         {% if item.target %}target="{{ item.target }}"{% endif %}
+         title="{{ item.label }}">{% icon item.icon %}</a>
+    {% endfor %}
 </div>
+{% endif %}

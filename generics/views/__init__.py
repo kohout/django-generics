@@ -285,7 +285,7 @@ class GenericCrudMixin(GenericModelMixin):
 
     def get_title(self):
         if self.template_name_suffix == '_detail':
-            return _(u'Details of %s') % self.object
+            return _(u'Details von %s') % self.object
         if self.object is None:
             return _(u'%s erstellen') % self.get_verbose_name()
 
@@ -295,6 +295,7 @@ class GenericCrudMixin(GenericModelMixin):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)
         ctx['submit_button_text'] = self.submit_button_text
         ctx['form_template'] = self.form_template
+        print self.form_template
         return ctx
 
     def get_model(self):

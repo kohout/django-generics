@@ -27,3 +27,7 @@ def row_button_width(row_buttons):
         return 0
     n = len(row_buttons)
     return n * 25 + (n - 1) * 5
+
+@register.filter
+def pass_param(method, param):
+    return method(param)

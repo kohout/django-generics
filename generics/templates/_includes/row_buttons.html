@@ -3,17 +3,21 @@
      style="white-space: nowrap; min-width: {{ record.row_buttons|row_button_width }}px;">
 {% if record.get_row_buttons %}
     {% for item in record.get_row_buttons|pass_param:request %}
+      {% if not lean or item.lean %}
       <a href="{{ item.url }}"
          class="btn btn-xs {{ item.css }}"
          {% if item.target %}target="{{ item.target }}"{% endif %}
          title="{{ item.label }}">{% icon item.icon %}</a>
+      {% endif %}
     {% endfor %}
 {% else %}
     {% for item in record.row_buttons %}
+      {% if not lean or item.lean %}
       <a href="{{ item.url }}"
          class="btn btn-xs {{ item.css }}"
          {% if item.target %}target="{{ item.target }}"{% endif %}
          title="{{ item.label }}">{% icon item.icon %}</a>
+      {% endif %}
     {% endfor %}
 </div>
 {% endif %}

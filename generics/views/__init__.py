@@ -9,7 +9,13 @@ from django_tables2 import RequestConfig
 from copy import deepcopy
 import importlib, json, random, datetime
 from collections import OrderedDict
+from django.conf import settings
 
+BACKEND_TEMPLATE_DIR = getattr(settings,
+    'BACKEND_TEMPLATE_DIR', 'administration/')
+
+BACKEND_VIEW_PREFIX = getattr(settings,
+    'BACKEND_VIEW_PREFIX', 'admin')
 
 class MainMenuMixin(object):
 
@@ -43,14 +49,16 @@ class GenericModelMixin(object):
     * GenericTableMixin
     * GenericCrudMixin
     """
-    template_name = 'administration/base.html'
+    template_name = '%sbase.html' % BACKEND_TEMPLATE_DIR
     selected = None
     filter_form = None
     success_view_name = None
     session_key = None
 
     def get_breadcrumbs(self):
-        list_view = 'admin-%s-list' % self.get_model_name().lower()
+        list_view = '%s-%s-list' % (
+            BACKEND_VIEW_PREFIX,
+            self.get_model_name().lower())
         return [
             {
                 'url': reverse_lazy(list_view),
@@ -92,7 +100,8 @@ class GenericModelMixin(object):
             if isinstance(self.template_name, basestring):
                 return [self.template_name]
         filename = self.template_name_suffix.replace('_', '')
-        return ["administration/%(model)s/%(filename)s.html" % {
+        return ["%(backend)s%(model)s/%(filename)s.html" % {
+            'backend': BACKEND_TEMPLATE_DIR,
             'model': self.get_model_name(),
             'filename': filename
         }]
@@ -109,7 +118,8 @@ class GenericModelMixin(object):
             else:
                 return reverse_lazy(self.success_view_name, kwargs={
                     'pk': self.object.pk})
-        return reverse_lazy('admin-%s-list' % self.get_model_name())
+        return reverse_lazy('%s-%s-list' % (
+            BACKEND_VIEW_PREFIX, self.get_model_name()))
 
 
 class GenericTableMixin(GenericModelMixin):
@@ -166,8 +176,10 @@ class GenericTableMixin(GenericModelMixin):
 
     def get_menues(self):
         return [{
+            'icon': 'plus',
             'css': 'btn-success',
-            'href': reverse_lazy('admin-%s-create' % self.get_model_name()),
+            'href': reverse_lazy('%s-%s-create' % (
+                BACKEND_VIEW_PREFIX, self.get_model_name())),
             'label': _('Add'), }]
 
     def get_title(self):
@@ -198,7 +210,8 @@ class RelatedMixin(GenericModelMixin):
         return self.parent
 
     def get_breadcrumbs(self):
-        list_view = 'admin-%(parent)s-%(model)s-list' % {
+        list_view = '%(prefix)s-%(parent)s-%(model)s-list' % {
+            'prefix': BACKEND_VIEW_PREFIX,
             'parent': self.parent._meta.model_name.lower(),
             'model': self.get_model_name().lower()
         }
@@ -228,7 +241,8 @@ class RelatedMixin(GenericModelMixin):
             if isinstance(self.template_name, basestring):
                 return [self.template_name]
         filename = self.template_name_suffix.replace('_', '')
-        return ["administration/%(parent)s/%(model)s/%(filename)s.html" % {
+        return ["%(backend)s%(parent)s/%(model)s/%(filename)s.html" % {
+            'backend': BACKEND_TEMPLATE_DIR,
             'parent': self.parent._meta.model_name.lower(),
             'model': self.get_model_name(),
             'filename': filename
@@ -244,7 +258,8 @@ class RelatedTableMixin(RelatedMixin, GenericTableMixin):
     def get_menues(self):
         return [{
             'css': 'btn-success',
-            'href': reverse_lazy('admin-%(parent)s-%(model)s-create' % {
+            'href': reverse_lazy('%(prefix)s-%(parent)s-%(model)s-create' % {
+                'prefix': BACKEND_VIEW_PREFIX,
                 'parent': self.parent._meta.model_name.lower(),
                 'model': self.get_model_name()
             }, kwargs={'parent_pk': self.parent.pk }),
@@ -268,13 +283,16 @@ class GenericCrudMixin(GenericModelMixin):
     def get_breadcrumbs(self):
         breadcrumbs = super(GenericCrudMixin, self).get_breadcrumbs()
         if self.object is None:
-            view = 'admin-%s-create' % self.get_model_name().lower()
+            view = '%s-%s-create' % (
+                BACKEND_VIEW_PREFIX, self.get_model_name().lower())
             url = reverse_lazy(view)
         else:
             if self.template_name_suffix == '_detail':
-                view = 'admin-%s-detail' % self.get_model_name().lower()
+                view = '%s-%s-detail' % (
+                    BACKEND_VIEW_PREFIX, self.get_model_name().lower())
             else:
-                view = 'admin-%s-update' % self.get_model_name().lower()
+                view = '%s-%s-update' % (
+                    BACKEND_VIEW_PREFIX, self.get_model_name().lower())
             url = reverse_lazy(view, kwargs={'pk': self.object.pk })
 
         breadcrumbs.append({

@@ -1,4 +1,7 @@
 {% load bootstrap3 generics %}
+{% comment %}
+    TODO: DEPRECATED use the new column class ButtonListColumn instead!
+{% endcomment %}
 <div class="pull-right"
      style="white-space: nowrap; min-width: {{ record.row_buttons|row_button_width }}px;">
 {% if record.get_row_buttons %}

@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
+from django.core.urlresolvers import reverse_lazy
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.decorators import method_decorator
+from django.conf import settings
+
+def get_login_url():
+    login_view = getattr(settings, 'LOGIN_URL', None)
+    if not login_view:
+        return '/'
+    return reverse_lazy(login_view)
 
 """ Methods """
 
@@ -19,7 +27,7 @@ def superuser_required(function=None,
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_authenticated() and u.is_superuser,
-        login_url='/',
+        login_url=get_login_url(),
         redirect_field_name=None
     )
     if function:
@@ -36,7 +44,7 @@ def staff_required(function=None,
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_authenticated() and u.is_staff,
-        login_url='/',
+        login_url=get_login_url(),
         redirect_field_name=None
     )
     if function:
@@ -52,7 +60,7 @@ def staff_or_superuser_required(function=None,
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_authenticated() and (u.is_staff or u.is_superuser),
-        login_url='/',
+        login_url=get_login_url(),
         redirect_field_name=None
     )
     if function:

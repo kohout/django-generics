@@ -1,0 +1,101 @@
+{% extends "layouts/base.html" %}
+{% load bootstrap3 i18n %}
+
+{% block content-header %}Administration / {{ title }}{% endblock %}
+
+{% block social %}{% endblock %}
+
+{% block breadcrumb %}
+    {{ block.super }}
+    <li><a href="{% url 'administration-overview' %}">Administration</a></li>
+    {% for breadcrumb in breadcrumbs %}
+      <li>
+        <a href="{{ breadcrumb.url }}">
+          {{ breadcrumb.label }}
+        </a>
+      </li>
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-2 col-sm-4">
+  </div>
+  <div class="col-md-10 col-sm-8">
+    {% block admin-tabs %}{% endblock %}
+  </div>
+</div>
+<div class="row">
+  <div class="{% block col2_class %}col-md-9{% endblock %}">
+    <p class="pull-right">
+      {% for menu in menues %}
+        <a class="btn btn-xs {{ menu.css }}"
+           {% if menu.target %}target="{{ menu.target }}"{% endif %}
+           href="{{ menu.href }}">
+           {% bootstrap_icon menu.icon %}
+           {{ menu.label }}</a>
+      {% endfor %}
+    </p>
+    {% if request.GET.keys %}
+      <p>
+        <a class="btn btn-xs btn-danger"
+           href="{{ request.path }}">Reset current filter</a>
+      </p>
+    {% endif %}
+    <div style="clear: both;"> </div>
+    {% block admin-content %}
+      {% block admin-title %}
+        <h4 class="heading">{{ title }}</h4>
+      {% endblock %}
+      {% if filter_conf.form %}
+        {% block admin-filter %}
+          <form action="." method="get">
+            {{ filter_conf.form.as_p }}
+            <button type="submit">Submit</button>
+          </form>
+        {% endblock %}
+      {% endif %}
+      {% block admin-inner-content %}
+        <div {% block admin-table-attrs %}{% endblock %}>
+          {% include "_includes/generic_table.html" %}
+        </div>
+        {% block table_footer %}{% endblock %}
+        {% if form %}
+          {{ form.media }}
+          <form method="post" action="." enctype="multipart/form-data">
+            {% csrf_token %}
+            {% include 'forms/invisible_fields.html' %}
+            {% block custom_form %}
+              {% if form_template %}
+                {% include form_template %}
+              {% else %}
+                {% bootstrap_form form %}
+              {% endif %}
+            {% endblock %}
+            {% buttons %}
+              <button type="submit"
+                      class="btn btn-primary pull-right btn-lg">
+                {% if submit_button_text %}
+                  {{ submit_button_text }}
+                {% else %}
+                  {% trans "Save" %}
+                {% endif %}
+              </button>
+            {% endbuttons %}
+            {% block custom_buttons %}
+              {% if parent_view %}
+                <a href="{{ parent_view }}"
+                   class="btn btn-default">&lt; Back</a>
+              {% endif %}
+            {% endblock %}
+           </form>
+        {% endif %}
+      {% endblock %}
+    {% endblock %}
+  </div>
+  {% block col3 %}
+    <div class="{% block col3_class %}col-md-3{% endblock %}">
+    </div>
+  {% endblock %}
+</div>
+{% endblock %}

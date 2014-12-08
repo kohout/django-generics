@@ -205,8 +205,12 @@ class RelatedMixin(GenericModelMixin):
     parent_field = None
 
     def get_parent(self):
-        self.parent = self.parent_model.objects.get(
-            pk=self.kwargs.get('parent_pk', None))
+        parent_pk = self.kwargs.get('parent_pk', None)
+        if parent_pk:
+            self.parent = self.parent_model.objects.get(pk=parent_pk)
+        else:
+            self.object = self.get_object()
+            self.parent = getattr(self.object, self.parent_field)
         return self.parent
 
     def get_breadcrumbs(self):

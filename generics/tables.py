@@ -18,7 +18,7 @@ class ButtonListColumn(Column):
         self.buttons = kwargs.pop('buttons')
         super(ButtonListColumn, self).__init__(*args, **kwargs)
 
-    def prepare_btn(self, btn, value, bound_column):
+    def prepare_btn(self, btn, value, bound_column, record):
         keys = btn.keys()
         if 'target' in keys:
             btn['target'] = u'target="%s"' % btn['target']
@@ -29,8 +29,12 @@ class ButtonListColumn(Column):
         else:
             btn['label'] = u''
         if 'view' in keys:
-            btn['url'] = reverse(btn['view'], kwargs={
-                bound_column.accessor: value })
+            if 'accessor' in keys:
+                btn['url'] = reverse(btn['view'], kwargs={
+                    btn['accessor']: value })
+            else:
+                btn['url'] = reverse(btn['view'], kwargs={
+                    bound_column.accessor: value })
         else:
             btn['view'] = u''
         return btn
@@ -38,7 +42,7 @@ class ButtonListColumn(Column):
     def render(self, value, record, bound_column):
         _rendered = []
         for btn in self.buttons:
-            _btn = self.prepare_btn(btn.copy(), value, bound_column)
+            _btn = self.prepare_btn(btn.copy(), value, bound_column, record)
             if 'method_available' in _btn:
                 if not getattr(record, _btn['method_available'])():
                     continue

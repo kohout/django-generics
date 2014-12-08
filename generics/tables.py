@@ -38,6 +38,9 @@ class ButtonListColumn(Column):
         _rendered = []
         for btn in self.buttons:
             _btn = self.prepare_btn(btn.copy(), record)
+            if 'method_available' in _btn:
+                if not getattr(record, _btn['method_available'])():
+                    continue
             _rendered.append(u'<a href="%(url)s" ' \
                 u'class="btn btn-condensed %(css)s"' \
                 u' %(target)s %(label)s><span class="glyphicon glyphicon-' \

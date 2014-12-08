@@ -8,12 +8,13 @@ def crud_urls(namespace,
               class_prefix,
               module,
               additional_urls=None,
-              view_praefix='admin'):
+              view_praefix='admin',
+              url_prefix=''):
     url_confs = [
-        ['ListView',   r'^/%s/$',                       'list'],
-        ['CreateView', r'^/%s/add/$',                   'create'],
-        ['UpdateView', r'^/%s/(?P<pk>[\w-]+)/$',        'update'],
-        ['DeleteView', r'^/%s/(?P<pk>[\w-]+)/delete/$', 'delete'],
+        ['ListView',   r'^%s%s/$',                       'list'],
+        ['CreateView', r'^%s%s/add/$',                   'create'],
+        ['UpdateView', r'^%s%s/(?P<pk>[\w-]+)/$',        'update'],
+        ['DeleteView', r'^%s%s/(?P<pk>[\w-]+)/delete/$', 'delete'],
     ]
     if additional_urls:
         url_confs.extend(additional_urls)
@@ -21,7 +22,9 @@ def crud_urls(namespace,
     for url_conf in url_confs:
         _view_class = getattr(module, u''.join([
             class_prefix, url_conf[0]]))
-        _new_pattern = url(url_conf[1] % namespace, _view_class.as_view(),
+        _new_pattern = url(
+            url_conf[1] % (url_prefix, namespace),
+            _view_class.as_view(),
             name=u'-'.join([view_praefix, namespace, url_conf[2]]))
         if _patterns is None:
             _patterns = patterns('', _new_pattern)

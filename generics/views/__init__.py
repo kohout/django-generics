@@ -378,6 +378,14 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         setattr(self.object, self.parent_field, self.parent)
         return super(RelatedCrudMixin, self).form_valid(form)
 
+    def get_title(self):
+        if self.template_name_suffix == '_detail':
+            return _(u'Details von %s') % self.object
+        if self.object is None:
+            return _(u'%s erstellen') % self.get_verbose_name()
+
+        return _(u'%s bearbeiten') % self.get_verbose_name()
+
 
 class StatsView(View):
     left = None

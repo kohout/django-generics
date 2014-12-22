@@ -133,6 +133,7 @@ class GenericTableMixin(GenericModelMixin):
     """
     filter_conf = None
     table_data = None
+    has_filters = False
 
     def get_queryset(self):
         qs = super(GenericTableMixin, self).get_queryset()
@@ -141,6 +142,9 @@ class GenericTableMixin(GenericModelMixin):
         if self.filter_set is None:
             return qs
         self.filter_conf = self.filter_set(self.request.GET, queryset=qs)
+        for key, filter_field in self.filter_conf.filters.items():
+            if self.request.GET.get(key, None):
+                self.has_filters = True
         return self.filter_conf.qs
 
     def get_table_class(self):
@@ -148,7 +152,10 @@ class GenericTableMixin(GenericModelMixin):
             return self.table_class
         module_name = '%s.tables' % self.get_app_label()
         module = importlib.import_module(module_name)
-        return getattr(module, '%sTable' % self.get_class_name())
+        try:
+            return getattr(module, '%sTable' % self.get_class_name())
+        except AttributeError:
+            return None
 
     def get_table(self, **kwargs):
         table_class = self.get_table_class()
@@ -172,6 +179,7 @@ class GenericTableMixin(GenericModelMixin):
         ctx['table'] = self.get_table()
         ctx['menues'] = self.get_menues()
         ctx['filter_conf'] = self.filter_conf
+        ctx['has_filters'] = self.has_filters
         return ctx
 
     def get_menues(self):

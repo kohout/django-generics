@@ -9,13 +9,22 @@ def crud_urls(namespace,
               module,
               additional_urls=None,
               view_praefix='admin',
-              url_prefix=''):
-    url_confs = [
+              url_prefix='',
+              exclude_urls=[]):
+    _url_confs = [
         ['ListView',   r'^%s%s/$',                       'list'],
         ['CreateView', r'^%s%s/add/$',                   'create'],
         ['UpdateView', r'^%s%s/(?P<pk>[\w-]+)/$',        'update'],
         ['DeleteView', r'^%s%s/(?P<pk>[\w-]+)/delete/$', 'delete'],
     ]
+    url_confs = []
+
+    # remove default views, if explicitly defined
+    for _url_conf in _url_confs:
+        if not _url_conf[2] in exclude_urls:
+            url_confs.append(_url_conf)
+
+    # add additional views, if excplicitly defined
     if additional_urls:
         url_confs.extend(additional_urls)
     _patterns = None

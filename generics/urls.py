@@ -31,8 +31,12 @@ def crud_urls(namespace,
     for url_conf in url_confs:
         _view_class = getattr(module, u''.join([
             class_prefix, url_conf[0]]))
+        if '%s%s' in url_conf[1]:
+            _url_pattern = url_conf[1] % (url_prefix, namespace)
+        else:
+            _url_pattern = url_conf[1] % namespace
         _new_pattern = url(
-            url_conf[1] % (url_prefix, namespace),
+            _url_pattern,
             _view_class.as_view(),
             name=u'-'.join([view_praefix, namespace, url_conf[2]]))
         if _patterns is None:

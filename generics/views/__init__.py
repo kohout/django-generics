@@ -17,6 +17,30 @@ BACKEND_TEMPLATE_DIR = getattr(settings,
 BACKEND_VIEW_PREFIX = getattr(settings,
     'BACKEND_VIEW_PREFIX', 'admin')
 
+class MenuMixin(object):
+    menu = None
+    key = None
+
+    def get_key(self):
+        return self.key
+
+    def get_menu(self):
+        return self.menu
+
+    def get_current_node(self):
+        _key = self.get_key()
+        _menu = self.get_menu()
+        if not _menu:
+            return None
+        if not _key:
+            return None
+        return settings.GENERICS_MENU_INDEX.get('.'.join([_menu, _key]), None)
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(MenuMixin, self).get_context_data(*args, **kwargs)
+        ctx['current_node'] = self.get_current_node()
+        return ctx
+
 class MainMenuMixin(object):
 
     def get_context_data(self, *args, **kwargs):

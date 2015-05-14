@@ -10,6 +10,7 @@ from copy import deepcopy
 import importlib, json, random, datetime
 from collections import OrderedDict
 from django.conf import settings
+from django.core.urlresolvers import NoReverseMatch
 
 BACKEND_TEMPLATE_DIR = getattr(settings,
     'BACKEND_TEMPLATE_DIR', 'administration/')
@@ -387,10 +388,14 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         if self.template_name_suffix == '_confirm_delete':
             return reverse_lazy(self.success_view_name,
                 kwargs={'parent_pk': self.parent.pk})
-
+        #try:
+        #    # perhaps a backwards-compatiblity issue?
+        #    return reverse_lazy(self.success_view_name,
+        #        kwargs={'pk': self.object.pk,
+        #                'parent_pk': self.parent.pk})
+        #except NoReverseMatch:
         return reverse_lazy(self.success_view_name,
-            kwargs={'pk': self.object.pk,
-                    'parent_pk': self.parent.pk})
+                kwargs={'parent_pk': self.parent.pk})
 
     def get(self, request, *args, **kwargs):
         if self.template_name_suffix == '_confirm_delete':

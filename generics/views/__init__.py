@@ -79,6 +79,7 @@ class GenericModelMixin(object):
     filter_form = None
     success_view_name = None
     session_key = None
+    tab_template = None
 
     def get_breadcrumbs(self):
         list_view = '%s-%s-list' % (
@@ -93,6 +94,9 @@ class GenericModelMixin(object):
 
     def get_model(self):
         return self.model
+
+    def get_tab_template(self):
+        return self.tab_template
 
     def get_class_name(self):
         return self.get_model().__name__
@@ -118,6 +122,7 @@ class GenericModelMixin(object):
         ctx['title'] = self.get_title()
         ctx['selected'] = self.selected
         ctx['breadcrumbs'] = self.get_breadcrumbs()
+        ctx['tabs'] = self.get_tab_template()
         return ctx
 
     def get_template_names(self):

@@ -67,7 +67,18 @@ class MainMenuMixin(object):
 #        return obj
 
 
-class GenericModelMixin(object):
+class BreadcrumbMixin(object):
+
+    def get_breadcrumbs(self):
+        return []
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(BreadcrumbMixin, self).get_context_data(*args, **kwargs)
+        ctx['breadcrumbs'] = self.get_breadcrumbs()
+        return ctx
+
+
+class GenericModelMixin(BreadcrumbMixin):
     """
     Attributes & methods that are used from
     * GenericTableMixin
@@ -116,7 +127,6 @@ class GenericModelMixin(object):
             *args, **kwargs)
         ctx['title'] = self.get_title()
         ctx['selected'] = self.selected
-        ctx['breadcrumbs'] = self.get_breadcrumbs()
         return ctx
 
     def get_template_names(self):
@@ -208,8 +218,10 @@ class GenericTableMixin(GenericModelMixin):
 
     def get_menues(self):
         return [{
-            'icon': 'plus',
-            'css': 'btn-success',
+            'icon': getattr(settings, 'BACKEND_DEFAULT_ADD_ICON',
+                'plus'),
+            'css': getattr(settings, 'BACKEND_DEFAULT_ADD_CLASS',
+                'btn-success'),
             'href': reverse_lazy('%s-%s-create' % (
                 BACKEND_VIEW_PREFIX, self.get_model_name())),
             'label': _('Add'), }]
@@ -315,6 +327,14 @@ class RelatedTableMixin(RelatedMixin, GenericTableMixin):
 class GenericCrudMixin(GenericModelMixin):
     submit_button_text = _(u'Save')
     form_template = None
+    used_in_dialog = False
+
+    def form_valid(self, form):
+        response = super(GenericCrudMixin, self).form_valid(form)
+        if self.used_in_dialog and self.request.is_ajax():
+            return HttpResponse('OK')
+        else:
+            return response
 
     def get_breadcrumbs(self):
         breadcrumbs = super(GenericCrudMixin, self).get_breadcrumbs()
@@ -349,7 +369,6 @@ class GenericCrudMixin(GenericModelMixin):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)
         ctx['submit_button_text'] = self.submit_button_text
         ctx['form_template'] = self.form_template
-        print self.form_template
         return ctx
 
     def get_model(self):
@@ -441,7 +460,6 @@ class StatsView(View):
             qs = self.queryset
         if hasattr(self, 'model'):
             qs = self.model.objects.all()
-        print qs.count()
         return qs
 
     # Non-functional
@@ -454,7 +472,6 @@ class StatsView(View):
         self.left = self.right + datetime.timedelta(-30)
         qs = self.get_queryset().filter(created_at__range=[self.left,
                                                            self.right])
-        print qs.count()
         return qs
 
     # TODO: this method returns random data at the moment.

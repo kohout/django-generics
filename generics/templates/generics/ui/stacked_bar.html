@@ -1,0 +1,10 @@
+{% load i18n %}
+<div class="stacked-bar" style="width: {{ value.total_width }}px;">
+    {% for item in value.items %}
+        {% if item.width > 0 %}
+        <span class="{{ item.css }}"
+              title="{% trans item.label %}"
+              style="width: {{ item.width }}px;">&nbsp;</span>
+        {% endif %}
+    {% endfor %}
+</div>

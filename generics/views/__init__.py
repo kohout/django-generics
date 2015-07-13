@@ -10,6 +10,7 @@ from copy import deepcopy
 import importlib, json, random, datetime
 from collections import OrderedDict
 from django.conf import settings
+from django.core.urlresolvers import NoReverseMatch
 
 BACKEND_TEMPLATE_DIR = getattr(settings,
     'BACKEND_TEMPLATE_DIR', 'administration/')
@@ -89,6 +90,7 @@ class GenericModelMixin(BreadcrumbMixin):
     filter_form = None
     success_view_name = None
     session_key = None
+    tab_template = None
 
     def get_breadcrumbs(self):
         list_view = '%s-%s-list' % (
@@ -103,6 +105,9 @@ class GenericModelMixin(BreadcrumbMixin):
 
     def get_model(self):
         return self.model
+
+    def get_tab_template(self):
+        return self.tab_template
 
     def get_class_name(self):
         return self.get_model().__name__
@@ -127,6 +132,7 @@ class GenericModelMixin(BreadcrumbMixin):
             *args, **kwargs)
         ctx['title'] = self.get_title()
         ctx['selected'] = self.selected
+        ctx['tabs'] = self.get_tab_template()
         return ctx
 
     def get_template_names(self):
@@ -406,10 +412,14 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         if self.template_name_suffix == '_confirm_delete':
             return reverse_lazy(self.success_view_name,
                 kwargs={'parent_pk': self.parent.pk})
-
+        #try:
+        #    # perhaps a backwards-compatiblity issue?
+        #    return reverse_lazy(self.success_view_name,
+        #        kwargs={'pk': self.object.pk,
+        #                'parent_pk': self.parent.pk})
+        #except NoReverseMatch:
         return reverse_lazy(self.success_view_name,
-            kwargs={'pk': self.object.pk,
-                    'parent_pk': self.parent.pk})
+                kwargs={'parent_pk': self.parent.pk})
 
     def get(self, request, *args, **kwargs):
         if self.template_name_suffix == '_confirm_delete':

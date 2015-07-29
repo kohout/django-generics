@@ -22,6 +22,7 @@ class ButtonListColumn(Column):
     #             current_app=None, attrs=None, **extra):
     def __init__(self, *args, **kwargs):
         self.buttons = kwargs.pop('buttons')
+        self.ROW_WRAPPER = kwargs.pop('row_wrapper', '%s')
         super(ButtonListColumn, self).__init__(*args, **kwargs)
 
     def prepare_btn(self, btn, value, bound_column, record):

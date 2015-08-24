@@ -85,6 +85,7 @@ class GenericModelMixin(BreadcrumbMixin):
     * GenericTableMixin
     * GenericCrudMixin
     """
+    namespace = ''
     template_name = '%sbase.html' % BACKEND_TEMPLATE_DIR
     selected = None
     filter_form = None
@@ -92,9 +93,14 @@ class GenericModelMixin(BreadcrumbMixin):
     session_key = None
     tab_template = None
 
+    def get_namespace(self):
+        if not self.namespace:
+            return ''
+        return '%s:' % self.namespace
+
     def get_breadcrumbs(self):
         list_view = '%s-%s-list' % (
-            BACKEND_VIEW_PREFIX,
+            ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
             self.get_model_name().lower())
         return [
             {
@@ -154,12 +160,14 @@ class GenericModelMixin(BreadcrumbMixin):
         if self.success_view_name:
             if self.success_view_name.endswith('-list'):
                 # redirect to list view (without param)
-                return reverse_lazy(self.success_view_name)
+                return reverse_lazy(
+                    ''.join([self.get_namespace(), self.success_view_name]))
             else:
                 return reverse_lazy(self.success_view_name, kwargs={
                     'pk': self.object.pk})
         return reverse_lazy('%s-%s-list' % (
-            BACKEND_VIEW_PREFIX, self.get_model_name()))
+            ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+            self.get_model_name()))
 
 
 class GenericTableMixin(GenericModelMixin):
@@ -229,7 +237,8 @@ class GenericTableMixin(GenericModelMixin):
             'css': getattr(settings, 'BACKEND_DEFAULT_ADD_CLASS',
                 'btn-success'),
             'href': reverse_lazy('%s-%s-create' % (
-                BACKEND_VIEW_PREFIX, self.get_model_name())),
+                ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+                self.get_model_name())),
             'label': _('Add'), }]
 
     def get_title(self):
@@ -265,7 +274,7 @@ class RelatedMixin(GenericModelMixin):
 
     def get_breadcrumbs(self):
         list_view = '%(prefix)s-%(parent)s-%(model)s-list' % {
-            'prefix': BACKEND_VIEW_PREFIX,
+            'prefix': ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
             'parent': self.parent._meta.model_name.lower(),
             'model': self.get_model_name().lower()
         }
@@ -418,7 +427,8 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         #        kwargs={'pk': self.object.pk,
         #                'parent_pk': self.parent.pk})
         #except NoReverseMatch:
-        return reverse_lazy(self.success_view_name,
+        return reverse_lazy(
+                ''.join([self.get_namespace(), self.success_view_name]),
                 kwargs={'parent_pk': self.parent.pk})
 
     def get(self, request, *args, **kwargs):

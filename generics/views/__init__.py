@@ -179,9 +179,13 @@ class GenericTableMixin(GenericModelMixin):
     table_class = None or
     table_class = False
     """
+    filter_template = None
     filter_conf = None
     table_data = None
     has_filters = False
+
+    def get_filter_set_kwargs(self):
+        return {}
 
     def get_queryset(self):
         qs = super(GenericTableMixin, self).get_queryset()
@@ -189,7 +193,9 @@ class GenericTableMixin(GenericModelMixin):
             return qs
         if self.filter_set is None:
             return qs
-        self.filter_conf = self.filter_set(self.request.GET, queryset=qs)
+        filter_set_kwargs = self.get_filter_set_kwargs()
+        self.filter_conf = self.filter_set(self.request.GET, queryset=qs,
+            **filter_set_kwargs)
         for key, filter_field in self.filter_conf.filters.items():
             if self.request.GET.get(key, None):
                 self.has_filters = True
@@ -227,6 +233,7 @@ class GenericTableMixin(GenericModelMixin):
         ctx['table'] = self.get_table()
         ctx['menues'] = self.get_menues()
         ctx['filter_conf'] = self.filter_conf
+        ctx['filter_template'] = self.filter_template
         ctx['has_filters'] = self.has_filters
         return ctx
 

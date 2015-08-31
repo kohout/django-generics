@@ -383,9 +383,9 @@ class GenericCrudMixin(GenericModelMixin):
         if self.template_name_suffix == '_detail':
             return _(u'Details von %s') % self.object
         if self.object is None:
-            return _(u'%s erstellen') % self.get_verbose_name()
+            return _(u'Create %s') % self.get_verbose_name()
 
-        return _(u'%s bearbeiten') % self.get_verbose_name()
+        return _(u'Edit %s') % self.get_verbose_name()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)

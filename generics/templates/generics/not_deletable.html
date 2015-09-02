@@ -1,0 +1,11 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<h1>{{ object }} not deletable</h1>
+<p>There are existing relations, which do not allow the deletion of this object:</p>
+<ul>
+{% for protected_object in protected_objects %}
+  <li>{{ protected_object }}</li>
+{% endfor %}
+</ul>
+{% endblock content %}

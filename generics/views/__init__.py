@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
+from django.template.response import TemplateResponse
 from django.views.generic import View
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
@@ -574,3 +576,25 @@ class StatsView(View):
     def get(self, request, *args, **kwargs):
         dataset = self.get_dataset()
         return HttpResponse(json.dumps(dataset, indent=4), 'application/json')
+
+class ProtectedDeleteView(DeleteView):
+    """
+    Tries to delete the object; if this object is used in a ForeignKey-field
+    with option `on_delete=models.PROTECT`, it will catch this error
+    and push a meaningful message to django.messages
+    """
+    protected_template_name = 'generics/not_deletable.html'
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            return super(ProtectedDeleteView, self).delete(
+                request, *args, **kwargs
+            )
+        except models.ProtectedError as e:
+            print self.template_name
+            return TemplateResponse(request,
+                self.protected_template_name,
+                {
+                    'object': self.object,
+                    'protected_objects': e.protected_objects,
+                })

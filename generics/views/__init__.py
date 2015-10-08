@@ -591,7 +591,6 @@ class ProtectedDeleteView(DeleteView):
                 request, *args, **kwargs
             )
         except models.ProtectedError as e:
-            print self.template_name
             return TemplateResponse(request,
                 self.protected_template_name,
                 {

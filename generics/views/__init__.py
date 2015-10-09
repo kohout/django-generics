@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
+from django.template.response import TemplateResponse
 from django.views.generic import View
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
@@ -10,6 +12,7 @@ from copy import deepcopy
 import importlib, json, random, datetime
 from collections import OrderedDict
 from django.conf import settings
+from django.core.urlresolvers import NoReverseMatch
 
 BACKEND_TEMPLATE_DIR = getattr(settings,
     'BACKEND_TEMPLATE_DIR', 'administration/')
@@ -67,21 +70,39 @@ class MainMenuMixin(object):
 #        return obj
 
 
-class GenericModelMixin(object):
+class BreadcrumbMixin(object):
+
+    def get_breadcrumbs(self):
+        return []
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(BreadcrumbMixin, self).get_context_data(*args, **kwargs)
+        ctx['breadcrumbs'] = self.get_breadcrumbs()
+        return ctx
+
+
+class GenericModelMixin(BreadcrumbMixin):
     """
     Attributes & methods that are used from
     * GenericTableMixin
     * GenericCrudMixin
     """
+    namespace = ''
     template_name = '%sbase.html' % BACKEND_TEMPLATE_DIR
     selected = None
     filter_form = None
     success_view_name = None
     session_key = None
+    tab_template = None
+
+    def get_namespace(self):
+        if not self.namespace:
+            return ''
+        return '%s:' % self.namespace
 
     def get_breadcrumbs(self):
         list_view = '%s-%s-list' % (
-            BACKEND_VIEW_PREFIX,
+            ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
             self.get_model_name().lower())
         return [
             {
@@ -92,6 +113,9 @@ class GenericModelMixin(object):
 
     def get_model(self):
         return self.model
+
+    def get_tab_template(self):
+        return self.tab_template
 
     def get_class_name(self):
         return self.get_model().__name__
@@ -116,7 +140,7 @@ class GenericModelMixin(object):
             *args, **kwargs)
         ctx['title'] = self.get_title()
         ctx['selected'] = self.selected
-        ctx['breadcrumbs'] = self.get_breadcrumbs()
+        ctx['tabs'] = self.get_tab_template()
         return ctx
 
     def get_template_names(self):
@@ -138,12 +162,14 @@ class GenericModelMixin(object):
         if self.success_view_name:
             if self.success_view_name.endswith('-list'):
                 # redirect to list view (without param)
-                return reverse_lazy(self.success_view_name)
+                return reverse_lazy(
+                    ''.join([self.get_namespace(), self.success_view_name]))
             else:
                 return reverse_lazy(self.success_view_name, kwargs={
                     'pk': self.object.pk})
         return reverse_lazy('%s-%s-list' % (
-            BACKEND_VIEW_PREFIX, self.get_model_name()))
+            ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+            self.get_model_name()))
 
 
 class GenericTableMixin(GenericModelMixin):
@@ -155,9 +181,13 @@ class GenericTableMixin(GenericModelMixin):
     table_class = None or
     table_class = False
     """
+    filter_template = None
     filter_conf = None
     table_data = None
     has_filters = False
+
+    def get_filter_set_kwargs(self):
+        return {}
 
     def get_queryset(self):
         qs = super(GenericTableMixin, self).get_queryset()
@@ -165,7 +195,9 @@ class GenericTableMixin(GenericModelMixin):
             return qs
         if self.filter_set is None:
             return qs
-        self.filter_conf = self.filter_set(self.request.GET, queryset=qs)
+        filter_set_kwargs = self.get_filter_set_kwargs()
+        self.filter_conf = self.filter_set(self.request.GET, queryset=qs,
+            **filter_set_kwargs)
         for key, filter_field in self.filter_conf.filters.items():
             if self.request.GET.get(key, None):
                 self.has_filters = True
@@ -203,15 +235,19 @@ class GenericTableMixin(GenericModelMixin):
         ctx['table'] = self.get_table()
         ctx['menues'] = self.get_menues()
         ctx['filter_conf'] = self.filter_conf
+        ctx['filter_template'] = self.filter_template
         ctx['has_filters'] = self.has_filters
         return ctx
 
     def get_menues(self):
         return [{
-            'icon': 'plus',
-            'css': 'btn-success',
+            'icon': getattr(settings, 'BACKEND_DEFAULT_ADD_ICON',
+                'plus'),
+            'css': getattr(settings, 'BACKEND_DEFAULT_ADD_CLASS',
+                'btn-success'),
             'href': reverse_lazy('%s-%s-create' % (
-                BACKEND_VIEW_PREFIX, self.get_model_name())),
+                ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+                self.get_model_name())),
             'label': _('Add'), }]
 
     def get_title(self):
@@ -247,7 +283,7 @@ class RelatedMixin(GenericModelMixin):
 
     def get_breadcrumbs(self):
         list_view = '%(prefix)s-%(parent)s-%(model)s-list' % {
-            'prefix': BACKEND_VIEW_PREFIX,
+            'prefix': ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
             'parent': self.parent._meta.model_name.lower(),
             'model': self.get_model_name().lower()
         }
@@ -315,6 +351,14 @@ class RelatedTableMixin(RelatedMixin, GenericTableMixin):
 class GenericCrudMixin(GenericModelMixin):
     submit_button_text = _(u'Save')
     form_template = None
+    used_in_dialog = False
+
+    def form_valid(self, form):
+        response = super(GenericCrudMixin, self).form_valid(form)
+        if self.used_in_dialog and self.request.is_ajax():
+            return HttpResponse('OK')
+        else:
+            return response
 
     def get_breadcrumbs(self):
         breadcrumbs = super(GenericCrudMixin, self).get_breadcrumbs()
@@ -341,15 +385,14 @@ class GenericCrudMixin(GenericModelMixin):
         if self.template_name_suffix == '_detail':
             return _(u'Details von %s') % self.object
         if self.object is None:
-            return _(u'%s erstellen') % self.get_verbose_name()
+            return _(u'Create %s') % self.get_verbose_name()
 
-        return _(u'%s bearbeiten') % self.get_verbose_name()
+        return _(u'Edit %s') % self.get_verbose_name()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(GenericCrudMixin, self).get_context_data(*args, **kwargs)
         ctx['submit_button_text'] = self.submit_button_text
         ctx['form_template'] = self.form_template
-        print self.form_template
         return ctx
 
     def get_model(self):
@@ -387,10 +430,15 @@ class RelatedCrudMixin(RelatedMixin, GenericModelMixin):
         if self.template_name_suffix == '_confirm_delete':
             return reverse_lazy(self.success_view_name,
                 kwargs={'parent_pk': self.parent.pk})
-
-        return reverse_lazy(self.success_view_name,
-            kwargs={'pk': self.object.pk,
-                    'parent_pk': self.parent.pk})
+        #try:
+        #    # perhaps a backwards-compatiblity issue?
+        #    return reverse_lazy(self.success_view_name,
+        #        kwargs={'pk': self.object.pk,
+        #                'parent_pk': self.parent.pk})
+        #except NoReverseMatch:
+        return reverse_lazy(
+                ''.join([self.get_namespace(), self.success_view_name]),
+                kwargs={'parent_pk': self.parent.pk})
 
     def get(self, request, *args, **kwargs):
         if self.template_name_suffix == '_confirm_delete':
@@ -441,7 +489,6 @@ class StatsView(View):
             qs = self.queryset
         if hasattr(self, 'model'):
             qs = self.model.objects.all()
-        print qs.count()
         return qs
 
     # Non-functional
@@ -454,7 +501,6 @@ class StatsView(View):
         self.left = self.right + datetime.timedelta(-30)
         qs = self.get_queryset().filter(created_at__range=[self.left,
                                                            self.right])
-        print qs.count()
         return qs
 
     # TODO: this method returns random data at the moment.
@@ -530,3 +576,24 @@ class StatsView(View):
     def get(self, request, *args, **kwargs):
         dataset = self.get_dataset()
         return HttpResponse(json.dumps(dataset, indent=4), 'application/json')
+
+class ProtectedDeleteView(DeleteView):
+    """
+    Tries to delete the object; if this object is used in a ForeignKey-field
+    with option `on_delete=models.PROTECT`, it will catch this error
+    and push a meaningful message to django.messages
+    """
+    protected_template_name = 'generics/not_deletable.html'
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            return super(ProtectedDeleteView, self).delete(
+                request, *args, **kwargs
+            )
+        except models.ProtectedError as e:
+            return TemplateResponse(request,
+                self.protected_template_name,
+                {
+                    'object': self.object,
+                    'protected_objects': e.protected_objects,
+                })

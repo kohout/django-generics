@@ -8,6 +8,12 @@ class ButtonListColumn(Column):
     """
     renders a list of bootstrap buttons
     """
+    ROW_WRAPPER = u'%s'
+    ROW_TEMPLATE = u'<a href="%(url)s" ' \
+                u'class="btn btn-condensed %(css)s"' \
+                u' %(target)s %(label)s><span class="glyphicon glyphicon-' \
+                u'%(icon)s"></span></a>'
+
     buttons = []
     width = 25
     padding = 5
@@ -16,16 +22,23 @@ class ButtonListColumn(Column):
     #             current_app=None, attrs=None, **extra):
     def __init__(self, *args, **kwargs):
         self.buttons = kwargs.pop('buttons')
+        self.ROW_WRAPPER = kwargs.pop('row_wrapper', '%s')
         super(ButtonListColumn, self).__init__(*args, **kwargs)
 
     def prepare_btn(self, btn, value, bound_column, record):
         keys = btn.keys()
+        if not 'icon' in keys:
+            btn['icon'] = u''
+        if not 'css' in keys:
+            btn['css'] = u''
         if 'target' in keys:
             btn['target'] = u'target="%s"' % btn['target']
         else:
             btn['target'] = u''
+        if not 'button_text' in keys:
+            btn['button_text'] = btn['label']
         if 'label' in keys:
-            btn['label'] = 'title="%s"' % btn['label']
+            btn['label'] = 'title="%s"' % unicode(btn['label'])
         else:
             btn['label'] = u''
         if 'view' in keys:
@@ -46,8 +59,5 @@ class ButtonListColumn(Column):
             if 'method_available' in _btn:
                 if not getattr(record, _btn['method_available'])():
                     continue
-            _rendered.append(u'<a href="%(url)s" ' \
-                u'class="btn btn-condensed %(css)s"' \
-                u' %(target)s %(label)s><span class="glyphicon glyphicon-' \
-                u'%(icon)s"></span></a>' % _btn)
-        return mark_safe(u'\n'.join(_rendered))
+            _rendered.append(self.ROW_TEMPLATE % _btn)
+        return mark_safe(self.ROW_WRAPPER % u'\n'.join(_rendered))

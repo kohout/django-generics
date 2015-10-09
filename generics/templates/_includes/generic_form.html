@@ -20,6 +20,9 @@
           {% trans "Save" %}
         {% endif %}
       </button>
+      {% if back_url %}
+        <a class="btn btn-default btn-lg" href="{{ back_url }}">Zurück</a>
+      {% endif %}
     {% endbuttons %}
   </form>
 {% endif %}

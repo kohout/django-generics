@@ -25,7 +25,7 @@ def content_to_pdf(content, encoding='utf-8', **options):
 
     tempfile.write(content.encode(encoding))
     tempfile.flush()
-    options['redirect-delay'] = 5000
+    # options['redirect-delay'] = 5000
     return wkhtmltopdf(pages=[tempfile.name], **options)
 
 def content_to_response(content, filename=None):

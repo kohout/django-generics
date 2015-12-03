@@ -101,13 +101,13 @@ class GenericModelMixin(BreadcrumbMixin):
         return '%s:' % self.namespace
 
     def get_breadcrumbs(self):
-        list_view = '%s-%s-list' % (
-            ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
-            self.get_model_name().lower())
+        list_view = '-'.join(filter(None,
+                                    [''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+                                     self.get_model_name().lower(), 'list']))
         return [
             {
                 'url': reverse_lazy(list_view),
-                'label': self.get_verbose_name()
+                'label': self.get_verbose_name_plural()
             }
         ]
 
@@ -282,16 +282,15 @@ class RelatedMixin(GenericModelMixin):
         return self.parent
 
     def get_breadcrumbs(self):
-        list_view = '%(prefix)s-%(parent)s-%(model)s-list' % {
-            'prefix': ''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
-            'parent': self.parent._meta.model_name.lower(),
-            'model': self.get_model_name().lower()
-        }
+        list_view = '-'.join(filter(None,
+                                    [''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+                                     self.parent._meta.model_name().lower(),
+                                     self.get_model_name().lower(), 'list']))
         return [
             {
                 'url': reverse_lazy(list_view, kwargs={
                     'parent_pk': self.parent.pk }),
-                'label': self.get_verbose_name()
+                'label': self.get_verbose_name_plural()
             }
         ]
 

@@ -11,7 +11,7 @@ class ButtonListColumn(Column):
     ROW_WRAPPER = u'%s'
     ROW_TEMPLATE = u'<a href="%(url)s" ' \
                 u'class="btn btn-condensed %(css)s"' \
-                u' %(target)s %(label)s><span class="glyphicon glyphicon-' \
+                u' %(target)s %(label)s><span class="%(icon-prefix)s' \
                 u'%(icon)s"></span></a>'
 
     buttons = []
@@ -29,6 +29,8 @@ class ButtonListColumn(Column):
         keys = btn.keys()
         if not 'icon' in keys:
             btn['icon'] = u''
+        if not 'icon-prefix' in keys:
+            btn['icon-prefix'] = 'glyphicon glyphicon-'
         if not 'css' in keys:
             btn['css'] = u''
         if 'target' in keys:

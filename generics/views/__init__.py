@@ -282,11 +282,19 @@ class RelatedMixin(GenericModelMixin):
         return self.parent
 
     def get_breadcrumbs(self):
+        list_view_parent = '-'.join(filter(None,
+                                    [''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
+                                     self.parent._meta.model_name.lower(),
+                                     'list']))
         list_view = '-'.join(filter(None,
                                     [''.join([self.get_namespace(), BACKEND_VIEW_PREFIX]),
-                                     self.parent._meta.model_name().lower(),
+                                     self.parent._meta.model_name.lower(),
                                      self.get_model_name().lower(), 'list']))
         return [
+            {
+              'url': reverse_lazy(list_view_parent),
+              'label': self.parent._meta.verbose_name_plural
+            },
             {
                 'url': reverse_lazy(list_view, kwargs={
                     'parent_pk': self.parent.pk }),
@@ -328,6 +336,8 @@ class RelatedTableMixin(RelatedMixin, GenericTableMixin):
 
     def get_menues(self):
         return [{
+            'icon': getattr(settings, 'BACKEND_DEFAULT_ADD_ICON',
+                'plus'),
             'css': 'btn-success',
             'href': reverse_lazy('%(prefix)s-%(parent)s-%(model)s-create' % {
                 'prefix': BACKEND_VIEW_PREFIX,

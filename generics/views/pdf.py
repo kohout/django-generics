@@ -31,7 +31,7 @@ def content_to_response(content, filename=None):
     """
     Return a pdf response using given *content*.
     """
-    response = HttpResponse(content, mimetype='application/pdf')
+    response = HttpResponse(content, content_type='application/pdf')
     if filename is not None:
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
     return response
